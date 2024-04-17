@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <title>Swiftoogle</title>
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-image: url("tsBg.jpg");
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+      }
+
+      p {
+        font-size: 24px;
+        color: white;
+        /* Text color */
+        text-shadow: 1px 1px 2px black;
+        /* White shadow with offset */
+      }
+
+      h1 {
+        font-size: 48px;
+        font-family: Arial, sans-serif;
+      }
+
+      .g {
+        color: #4285f4;
+        text-shadow: 2px 2px 4px black;
+      }
+
+      .o1,
+      .i {
+        color: #ea4335;
+        text-shadow: 2px 2px 4px black;
+      }
+
+      .o2 {
+        color: #fbbc05;
+        text-shadow: 2px 2px 4px black;
+      }
+
+      .g2,
+      .f {
+        color: #34a853;
+        text-shadow: 2px 2px 4px black;
+      }
+
+      .l,
+      .t {
+        color: #ff8c00;
+        text-shadow: 2px 2px 4px black;
+      }
+
+      .e {
+        color: #ea4335;
+        text-shadow: 2px 2px 4px black;
+      }
+
+      .search-container {
+        text-align: center;
+      }
+
+      .left-align {
+        text-align: left;
+      }
+
+      .scrollable-paragraph {
+        opacity: 0%;
+        background-color: rgba(255, 255, 255, 0.1);
+        color: white;
+        border-radius: 30px;
+        height: 0px;
+        overflow: auto;
+        padding: 30px;
+        transition: all 0.9s cubic-bezier(0.27, 1.2, 0.41, 1);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      @media screen and (max-width: 767px) {
+        .scrollable-paragraph {
+          padding: 15px;
+        }
+
+        span {
+          font-size: 22px;
+        }
+
+        .left-align {
+          font-size: 13px;
+        }
+      }
+
+      #searchInput {
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.7);
+        color: black;
+        width: 200px;
+        margin-right: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      #searchButton {
+        padding: 10px 15px;
+        border: none;
+        border-radius: 5px;
+        background-color: rgba(0, 0, 0, 0.8);
+        color: white;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      #searchButton:hover {
+        background-color: rgba(0, 0, 0, 1);
+      }
+    </style>
+
+    <script>
+      var setResultsDiv = document.getElementsByClassName(
+        "scrollable-paragraph",
+      );
+      document.addEventListener("DOMContentLoaded", function () {
+        document
+          .getElementById("searchButton")
+          .addEventListener("click", function () {
+            var key = document.getElementById("searchInput").value;
+
+            if (key == "") return alert("Please type an acronym!");
+
+            setResultsDiv[0].style.opacity = "0%";
+            setResultsDiv[0].style.height = "0px";
+
+            document.getElementById("res").innerHTML = "";
+            document.getElementById("loading").style.display = "block"; // Show loading message
+            getData(key.toLowerCase());
+          });
+      });
+
+      function getData(searchKey) {
+        let urlAlbums =
+          "https://sheets.googleapis.com/v4/spreadsheets/1liLYI0yIYNGFT8pr6IXcgZK_f4Xo8uIkAJYl6_abiUo?key=AIzaSyDWu6pbsSqfiixAxPvY6TbBVBehj8svUeo";
+
+        fetch(urlAlbums)
+          .then(function (response) {
+            // Parse the body as JSON
+            return response.json();
+          })
+          .then(function (rawData) {
+            var albums = rawData.sheets.map((a) => a.properties.title);
+
+            let urlTitles =
+              "https://sheets.googleapis.com/v4/spreadsheets/1liLYI0yIYNGFT8pr6IXcgZK_f4Xo8uIkAJYl6_abiUo?fields=sheets%2Fdata%2FrowData%2Fvalues&key=AIzaSyDWu6pbsSqfiixAxPvY6TbBVBehj8svUeo";
+
+            fetch(urlTitles)
+              .then(function (response) {
+                // Parse the body as JSON
+                return response.json();
+              })
+              .then(function (rawData) {
+                var raw = rawData.sheets.map((a, i) =>
+                  a.data
+                    .map((b) =>
+                      b.rowData.map((c) =>
+                        c.values.map((d) => [
+                          albums[i],
+                          d.formattedValue,
+                          d.note,
+                        ]),
+                      ),
+                    )
+                    .flat(2),
+                );
+
+                var songs = raw.map((x) => x.filter((y) => y[1] != undefined));
+                var res = [];
+
+                songs.forEach((album) =>
+                  album.forEach((song) => {
+                    try {
+                      song[2]
+                        .toString()
+                        .toLowerCase()
+                        .replace(/'/gm, "")
+                        .split(/\r?\n/)
+                        .map((line) => [line, line.match(/\b\w/g).join("")])
+                        .filter(
+                          (search) =>
+                            search[1].includes(searchKey) &&
+                            res.push([song[1], search[0], search[1]]),
+                        );
+                    } catch (e) {}
+                  }),
+                );
+
+                var result = res.filter((value, index, self) => {
+                  const firstLevelValue = value[0];
+                  const firstIndexOfValue = self.findIndex(
+                    (item) => item[0] === firstLevelValue,
+                  );
+                  return index === firstIndexOfValue;
+                });
+
+                var div = document.getElementById("res");
+                document.getElementById("loading").style.display = "none"; // Hide loading message
+                setResultsDiv[0].style.opacity = "100%";
+                setResultsDiv[0].style.height = "200px";
+
+                div.innerHTML = result
+                  .map(
+                    (x) =>
+                      `Song: "${x[0]}"<br>Possible lyrics: "${x[1]}"<br><br>`,
+                  )
+                  .join("<br>");
+
+                if (result.length == "")
+                  alert(
+                    "No data found!\nThe database might not be fully updated yet.",
+                  );
+              })
+              .catch(function (error) {
+                console.error("Error fetching data:", error);
+              });
+          })
+          .catch(function (error) {
+            console.error("Error fetching data:", error);
+          });
+      }
+    </script>
+  </head>
+
+  <body>
+    <div class="search-container">
+      <h1>
+        <span class="g">S</span>
+        <span class="o1">W</span>
+        <span class="i">I</span>
+        <span class="f">F</span>
+        <span class="t">T</span>
+        <span class="o2">O</span>
+        <span class="o1">O</span>
+        <span class="g2">G</span>
+        <span class="l">L</span>
+        <span class="e">E</span>
+      </h1>
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="Enter a TS Acronym here"
+      />
+      <button id="searchButton">Decode</button>
+      <br />
+      <br />
+      <div id="loading" style="display: none">
+        <img
+          src="https://media.tenor.com/xRHZA8kKm2IAAAAi/discord-discordgifemoji.gif"
+          alt="loading"
+          width="25"
+          height="25"
+        />
+      </div>
+      <div class="scrollable-paragraph">
+        <p class="left-align" id="res"></p>
+      </div>
+    </div>
+  </body>
+</html>
