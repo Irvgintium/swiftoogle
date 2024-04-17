@@ -4,7 +4,7 @@ Welcome to Swiftoogle, your go-to tool for decoding Taylor Swift's acronyms in h
 
 ## Overview
 
-Swiftoogle is a simple yet powerful web application designed to help you decipher the cryptic acronyms often found in Taylor Swift's songs. By utilizing Google Sheets API, it searches through a comprehensive database of Taylor Swift's lyrics, providing you with potential interpretations of the acronyms.
+Swiftoogle is a simple web application designed to help you decipher the cryptic acronyms often found in Taylor Swift's songs. By utilizing Google Sheets API, it searches through a comprehensive database of Taylor Swift's lyrics, providing you with potential interpretations of the acronyms.
 
 ## Features
 
